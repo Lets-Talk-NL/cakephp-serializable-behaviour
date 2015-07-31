@@ -34,7 +34,8 @@ class SerializableBehavior extends ModelBehavior {
 			'serialize' => 'serialize',
 			'unserialize' => 'unserialize',
 			'aliases' => array(),
-			'merge' => false
+			'merge' => false,
+			'overwrite_on_merge' => array(),
 		);
 	}
 
@@ -75,6 +76,13 @@ class SerializableBehavior extends ModelBehavior {
 			);
 		}
 		foreach ($this->config[$Model->alias]['fields'] as $field) {
+			if(isset($this->config[$Model->alias]['overwrite_on_merge'][$field]) && $currentData){
+				foreach($this->config[$Model->alias]['overwrite_on_merge'][$field] as $path){
+					if((isset($Model->data[$field]) && Hash::check($Model->data[$field], $path)) || (isset($Model->data[$Model->alias][$field]) && Hash::check($Model->data[$Model->alias][$field], $path))) { //only remove if the path is set in the new data
+						$currentData = Hash::remove( $currentData, $Model->alias.'.'.$field.'.'.$path );
+					}
+				}
+			}
 			if (isset($Model->data[$Model->alias][$field])) {
 				if ($currentData) {
 					$Model->data[$Model->alias][$field] = array_replace_recursive((array)$currentData[$Model->alias][$field], (array)$Model->data[$Model->alias][$field]);
